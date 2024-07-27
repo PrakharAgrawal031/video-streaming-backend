@@ -1,11 +1,35 @@
 import connect from "./db/index.js";
 import dotenv from "dotenv";
-
+import app from "./app.js"
 dotenv.config({
     path: "./.env"
 });
-
+console.log(typeof app)
+if (typeof app.listen === "function") {
+    console.log("app is an instance of Express");
+  } else {
+    console.log("app is not an instance of Express");
+  }
 connect()
+.then(()=>{
+    try {
+        
+        app.on("error",(error)=>{
+            console.log("Error starting server: ", error);
+            throw(error);
+        })
+        
+        app.listen(process.env.PORT || 8000, ()=>{
+        console.log(`Server is running on port ${process.env.PORT}`);
+    });
+    } catch(error){
+        console.log("Server error: ", error);
+        process.exit(1);
+     }
+})
+.catch((error)=>{
+    console.log("MongoDB error: ",error)
+})
 
 
 
