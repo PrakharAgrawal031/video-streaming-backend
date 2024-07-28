@@ -21,6 +21,10 @@ connect()
         
         app.listen(process.env.PORT || 8000, ()=>{
         console.log(`Server is running on port ${process.env.PORT}`);
+
+        app.get("/", (req, res)=>{
+            res.send("Server is running!")
+        })
     });
     } catch(error){
         console.log("Server error: ", error);
