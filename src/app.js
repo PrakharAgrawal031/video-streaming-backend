@@ -14,4 +14,13 @@ app.use(express.urlencoded({extended: true, limit: "16kb"})) //allow to access e
 app.use(express.static("public")) //creates static path
 app.use(cookieParser()) //allows crud operations on client browser
 
+
+//importing routes
+import userRouter from './routes/user.routes.js'
+
+//routes declarations
+app.use('/api/v1/users', userRouter) 
+//http://localhost:8000/api/v1/users/register
+
+
 export default app 
