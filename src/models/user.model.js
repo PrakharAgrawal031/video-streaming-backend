@@ -33,14 +33,6 @@ const userSchema = new Schema({
         trim: true,
         index: true
     },
-    username: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true,
-        index: true
-    },
     coverimage: {
         type: String //cloudinary only
     },
@@ -59,7 +51,7 @@ userSchema.pre('save', async function(next){
     next()} else return next();
 })
 
-userSchema.Schema.methods.isPasswordCorrect = async function(password){
+userSchema.methods.isPasswordCorrect = async function(password){
    return await bcrypt.compare(password, this.password)
 }
 
