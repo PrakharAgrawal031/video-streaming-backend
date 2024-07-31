@@ -23,7 +23,7 @@ const userSchema = new Schema({
         lowercase: true,
         trim: true
     },
-    avatar: {
+    avtar: {
         type: String //cloudinary only
 
     },

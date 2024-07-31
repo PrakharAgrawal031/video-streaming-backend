@@ -14,35 +14,40 @@ import { ApiResponse } from '../utils/apiResponse.js';
 //send response
 //redirect user to login page
 
-const registerUser = asyncHandler(async (req,res)=>{
-     const {fullname, email, username, password}= req.body
-     console.log(`Full Name:${fullname},Username:${username},Email:${email},Password:${password}`);
-     if(
-        [fullname, email, username, password].some((field)=>{
-            field?.trim()===""
-        })
-    ){
-        throw new ApiError(400, "All fields are required")
-     }
+const registerUser = asyncHandler(async (req, res) => {
+    const { fullname, email, username, password } = req.body;
+    console.log(`Full Name: ${fullname}, Username: ${username}, Email: ${email}, Password: ${password}`);
+    console.log("Request Body: ", req.body);
+    console.log('Request file:', req.files); // This should be req.files
+    console.log('Avtar file:', req.files?.avtar); // This should be req.files.avtar
+    console.log('Coverimage file:', req.files?.coverimage); // This should be req.files.coverimage
 
-     const existingUser = User.findOne({
-        $or: [{email}, {username}]
-    })
-    if(existingUser){
-        throw new ApiError(409, "Email or Username already exists")
+    if ([fullname, email, username, password].some((field) => field?.trim() === "")) {
+        throw new ApiError(400, "All fields are required");
     }
 
-    const avtarLocalPath = req.file?.avtar[0]?.path;
-    const coverLocalPath = req.file?.coverimage[0]?.path;
-
-    if(!avtarLocalPath){
-        throw new ApiError(400, "No avtar image provided")
+    const existingUser = await User.findOne({
+        $or: [{ email }, { username }]
+    });
+    if (existingUser) {
+        throw new ApiError(409, "Email or Username already exists");
     }
 
-    const avtar = await uploadOnCloudinary(avtarLocalPath)
-    const coverimage = await uploadOnCloudinary(coverLocalPath)
-    if(!avtar){
-        throw new ApiError(400, "Failed to upload avtar image")
+    const avtarLocalPath = req.files?.avtar && req.files.avtar[0]?.path;
+    const coverLocalPath = req.files?.coverimage && req.files.coverimage[0]?.path; //code commented below does the same thing as this code
+    // let coverLocalPath
+    // if(req.files && Array.isArray(req.files.coverimage) && req.files.coverimage.length>0){
+    //     coverLocalPath = req.files.coverimage[0].path;
+    // }
+
+    if (!avtarLocalPath) {
+        throw new ApiError(400, "No avtar image provided");
+    }
+
+    const avtar = await uploadOnCloudinary(avtarLocalPath);
+    const coverimage = await uploadOnCloudinary(coverLocalPath);
+    if (!avtar) {
+        throw new ApiError(400, "Failed to upload avtar image");
     }
 
     const user = await User.create({
@@ -51,22 +56,17 @@ const registerUser = asyncHandler(async (req,res)=>{
         username: username.toLowerCase(),
         password,
         avtar: avtar.url,
-        coverimage: coverimage?.url||"",
-     }, (error, user)=>{
-    })
+        coverimage: coverimage?.url || "",
+    });
 
-    const createdUserFinal = await User.findById(user._id).select(
-        "-password -refreshToken"
-    )
+    const createdUserFinal = await User.findById(user._id).select("-password -refreshToken");
 
-    if(!createdUserFinal){
-        throw new ApiError(500, "Something went wrong while creating the user")
+    if (!createdUserFinal) {
+        throw new ApiError(500, "Something went wrong while creating the user");
     }
 
-    return res.status(201).json(
-        new ApiResponse(200, createdUserFinal, "User created successfully")
-    )
+    return res.status(201).json(new ApiResponse(200, createdUserFinal, "User created successfully"));
+});
 
-})
 
 export  {registerUser}
