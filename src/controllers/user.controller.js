@@ -244,7 +244,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
-  const {fullname, email } = req.body;
+  const { fullname, email } = req.body;
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
@@ -262,7 +262,55 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
+const updateAvtar = asyncHandler(async (req, res) => {
+  const avtarLocalPath = req.file?.path;
+  if (!avtarLocalPath) {
+    throw new ApiError(400, "No avtar image provided");
+  }
+  const avtar = await uploadOnCloudinary(avtarLocalPath);
 
+  if (!avtar.url) {
+    throw new ApiError(400, "Failed to upload avtar image");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        avtar: avtar.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Avtar updated successfully"));
+});
+
+const updateCoverimage = asyncHandler(async (req, res) => {
+  const coverimageLocalPath = req.file?.path;
+  if (!coverimageLocalPath) {
+    throw new ApiError(400, "No avtar image provided");
+  }
+  const coverimage = await uploadOnCloudinary(coverimageLocalPath);
+
+  if (!coverimage.url) {
+    throw new ApiError(400, "Failed to upload cover image");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        coverimage: coverimage.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover image updated successfully"));
+});
 
 export {
   registerUser,
@@ -271,5 +319,7 @@ export {
   refreshAccessToken,
   changeUserPassword,
   getCurrentUser,
-  updateAccountDetails
+  updateAccountDetails,
+  updateAvtar,
+  updateCoverimage,
 };
