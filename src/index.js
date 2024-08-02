@@ -4,12 +4,12 @@ import app from "./app.js"
 dotenv.config({
     path: "./.env"
 });
-console.log(typeof app)
-if (typeof app.listen === "function") {
-    console.log("app is an instance of Express");
-  } else {
-    console.log("app is not an instance of Express");
-  }
+// console.log(typeof app)
+// if (typeof app.listen === "function") {
+//     console.log("app is an instance of Express");
+//   } else {
+//     console.log("app is not an instance of Express");
+//   }
 connect()
 .then(()=>{
     try {
