@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/apiResponse.js";
+import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 //steps for registering a new user
 //recieve post request from user which includes data about user
@@ -314,8 +315,6 @@ const updateCoverimage = asyncHandler(async (req, res) => {
 });
 
 const getUserProfile = asyncHandler(async (req, res) => {
-  console.log(req.params)
-  console.log(req)
   const { username } = req.params;
   if (!username?.trim()) {
     throw new ApiError(400, "Username is missing");
@@ -392,27 +391,26 @@ const getUserProfile = asyncHandler(async (req, res) => {
 const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
-      $match:{
-        _id: new mongoose.Types.ObjectId(req.user._id),
-
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user._id)
       }
     },
     {
-      $lookup:{
-        from:"videos",
-        localField:"watchHistory",
-        foreignField:"_id",
-        as:"watchHistory",
-        pipeline:[
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
           {
-            $lookup:{
-              from:"users",
-              localField:"owner",
-              foreignField:"_id",
-              as:"videoOwner",
-              pipeline:[
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "videoOwner",
+              pipeline: [
                 {
-                  $project:{
+                  $project: {
                     fullname: 1,
                     username: 1,
                     avtar: 1
@@ -423,25 +421,31 @@ const getWatchHistory = asyncHandler(async (req, res) => {
           },
           {
             $addFields: {
-              videoOwner:{
-                $first:"videoOwner",
+              videoOwner: {
+                $arrayElemAt: ["$videoOwner", 0]
               }
             }
           }
         ]
       }
     }
-  ])
+  ]);
 
-  return res.status(200)
-  .json(
+  if (!user || user.length === 0) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const watchHistory = user[0]?.watchHistory || [];
+
+  return res.status(200).json(
     new ApiResponse(
       200,
-      user[0].watchHistory,
+      watchHistory,
       "User watch history fetched successfully"
     )
-  )
-})
+  );
+});
+
 
 export {
   registerUser,
