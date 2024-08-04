@@ -40,11 +40,6 @@ const registerUser = asyncHandler(async (req, res) => {
   console.log(
     `Full Name: ${fullname}, Username: ${username}, Email: ${email}, Password: ${password}`
   );
-  console.log("Request Body: ", req.body);
-  console.log("Request file:", req.files); // This should be req.files
-  console.log("Avtar file:", req.files?.avtar); // This should be req.files.avtar
-  console.log("Coverimage file:", req.files?.coverimage); // This should be req.files.coverimage
-
   if (
     [fullname, email, username, password].some((field) => field?.trim() === "")
   ) {
@@ -226,7 +221,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 const changeUserPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   const user = await User.findById(req.user?._id);
-  const isPasswordCorrect = await user.isPasswordCorrect(password);
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
   if (!isPasswordCorrect) {
     throw new ApiError(400, "Password incorrect");
   }
@@ -246,72 +241,68 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
+  console.log("Received update account request with body:", req.body);
   const { fullname, email } = req.body;
 
   const user = await User.findByIdAndUpdate(
-    req.user?._id,
-
-    {
-      $set: {
-        fullname,
-        email: email,
+      req.user?._id,
+      {
+          $set: { fullname, email },
       },
-    },
-    { new: true }
+      { new: true }
   ).select("-password");
+
+  if (!user) {
+      throw new ApiError(500, "Failed to update account details");
+  }
+
   return res
-    .status(200)
-    .json(new ApiResponse(200, user, "Account details updated successfully"));
+      .status(200)
+      .json(new ApiResponse(200, user, "Account details updated successfully"));
 });
 
 const updateAvtar = asyncHandler(async (req, res) => {
   const avtarLocalPath = req.file?.path;
   if (!avtarLocalPath) {
-    throw new ApiError(400, "No avtar image provided");
+      throw new ApiError(400, "No avtar image provided");
   }
   const avtar = await uploadOnCloudinary(avtarLocalPath);
 
   if (!avtar.url) {
-    throw new ApiError(400, "Failed to upload avtar image");
+      throw new ApiError(400, "Failed to upload avtar image");
   }
 
   const user = await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      $set: {
-        avtar: avtar.url,
-      },
-    },
-    { new: true }
+      req.user._id,
+      { $set: { avtar: avtar.url } },
+      { new: true }
   ).select("-password");
+
   return res
-    .status(200)
-    .json(new ApiResponse(200, user, "Avtar updated successfully"));
+      .status(200)
+      .json(new ApiResponse(200, user, "Avtar updated successfully"));
 });
 
 const updateCoverimage = asyncHandler(async (req, res) => {
   const coverimageLocalPath = req.file?.path;
   if (!coverimageLocalPath) {
-    throw new ApiError(400, "No avtar image provided");
+      throw new ApiError(400, "No cover image provided");
   }
   const coverimage = await uploadOnCloudinary(coverimageLocalPath);
 
   if (!coverimage.url) {
-    throw new ApiError(400, "Failed to upload cover image");
+      throw new ApiError(400, "Failed to upload cover image");
   }
 
   const user = await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      $set: {
-        coverimage: coverimage.url,
-      },
-    },
-    { new: true }
+      req.user._id,
+      { $set: { coverimage: coverimage.url } },
+      { new: true }
   ).select("-password");
+
   return res
-    .status(200)
-    .json(new ApiResponse(200, user, "Cover image updated successfully"));
+      .status(200)
+      .json(new ApiResponse(200, user, "Cover image updated successfully"));
 });
 
 const getUserProfile = asyncHandler(async (req, res) => {
@@ -377,7 +368,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
   if(!channel?.length){
     throw new ApiError(404, "channel does not exist")
   }
-  console.log(channel);
+  // console.log(channel);
   return res.status(200)
   .json(
     new ApiResponse(
